@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Pressable, Text, View } from "react-native";
 import { supabase } from "../lib/supabase";
 
@@ -15,11 +15,7 @@ export default function ResultScreen() {
 
   const scaleAnim = useRef(new Animated.Value(0.6)).current;
 
-  useEffect(() => {
-    fetchTeams();
-  }, []);
-
-  async function fetchTeams() {
+  const fetchTeams = useCallback(async () => {
     const { data } = await supabase
       .from("player_match")
       .select(
@@ -43,7 +39,11 @@ export default function ResultScreen() {
 
     setTeamA(data.filter((p) => p.team_id === teamAId));
     setTeamB(data.filter((p) => p.team_id === teamBId));
-  }
+  }, [matchId]);
+
+  useEffect(() => {
+    fetchTeams();
+  }, [fetchTeams]);
 
   async function finishMatch(winningTeam: number) {
     if (loading) return;
