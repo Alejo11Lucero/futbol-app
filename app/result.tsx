@@ -11,20 +11,14 @@ export default function ResultScreen() {
   const [teamA, setTeamA] = useState<any[]>([]);
   const [teamB, setTeamB] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [winner, setWinner] = useState<number | null>(null);
+  const [winner, setWinner] = useState<number | "draw" | null>(null);
 
   const scaleAnim = useRef(new Animated.Value(0.6)).current;
 
   const fetchTeams = useCallback(async () => {
     const { data } = await supabase
       .from("player_match")
-      .select(
-        `
-        player_id,
-        players(name),
-        team_id
-      `,
-      )
+      .select(`player_id, players(name), team_id`)
       .eq("match_id", matchId);
 
     const { data: teams } = await supabase
@@ -45,11 +39,12 @@ export default function ResultScreen() {
     fetchTeams();
   }, [fetchTeams]);
 
-  async function finishMatch(winningTeam: number) {
+  // 🏆 FINALIZAR PARTIDO (GANADOR O EMPATE)
+  async function finishMatch(result: number | "draw") {
     if (loading) return;
 
     setLoading(true);
-    setWinner(winningTeam);
+    setWinner(result);
 
     const { data } = await supabase
       .from("player_match")
@@ -59,15 +54,21 @@ export default function ResultScreen() {
     if (!data) return;
 
     for (const item of data) {
-      const { data: teamData } = await supabase
-        .from("teams_per_match")
-        .select("team_number")
-        .eq("id", item.team_id)
-        .single();
+      let points = 0;
 
-      if (!teamData) continue;
+      if (result === "draw") {
+        points = 1;
+      } else {
+        const { data: teamData } = await supabase
+          .from("teams_per_match")
+          .select("team_number")
+          .eq("id", item.team_id)
+          .single();
 
-      const points = teamData.team_number === winningTeam ? 3 : 0;
+        if (!teamData) continue;
+
+        points = teamData.team_number === result ? 3 : 0;
+      }
 
       await supabase
         .from("player_match")
@@ -86,7 +87,7 @@ export default function ResultScreen() {
       .from("matches")
       .update({
         status: "finished",
-        winner_team: winningTeam,
+        winner_team: result === "draw" ? null : result,
       })
       .eq("id", matchId);
 
@@ -98,33 +99,25 @@ export default function ResultScreen() {
       useNativeDriver: true,
     }).start();
 
-    // 🔥 desaparece suave y vuelve al home
+    // ⏱ desaparecer rápido + volver
     setTimeout(() => {
       Animated.timing(scaleAnim, {
         toValue: 0.5,
-        duration: 100,
+        duration: 120,
         useNativeDriver: true,
-      }).start(() => {
+      }).start(async () => {
+        await AsyncStorage.removeItem("activeMatch");
         router.replace("/");
       });
-    }, 500);
-
-    // limpiar sesión
-    await AsyncStorage.removeItem("activeMatch");
-
-    // redirigir después de animación
-    setTimeout(() => {
-      router.replace("/");
-    }, 500);
+    }, 400);
   }
 
   return (
     <View style={container}>
-      <Text style={title}>Resultado del Partido</Text>
+      <Text style={title}>🎖️ Resultado del Partido 🎖️</Text>
 
-      {/* 🔥 EQUIPOS PRO */}
+      {/* EQUIPOS */}
       <View style={{ flexDirection: "row", gap: 12 }}>
-        {/* TEAM A */}
         <View style={teamCard}>
           <Text style={teamTitleBlue}>🔵 Equipo A ({teamA.length})</Text>
 
@@ -137,7 +130,6 @@ export default function ResultScreen() {
           ))}
         </View>
 
-        {/* TEAM B */}
         <View style={teamCard}>
           <Text style={teamTitleRed}>🔴 Equipo B ({teamB.length})</Text>
 
@@ -151,8 +143,8 @@ export default function ResultScreen() {
         </View>
       </View>
 
-      {/* BOTONES */}
-      <Text style={subtitle}>¿Quién ganó?</Text>
+      {/* RESULTADO */}
+      <Text style={subtitle}>¿Cómo terminó?</Text>
 
       <Pressable
         disabled={loading}
@@ -170,14 +162,25 @@ export default function ResultScreen() {
         <Text style={btnText}>🏆 Ganó Equipo B</Text>
       </Pressable>
 
-      {/* 🎉 OVERLAY GANADOR */}
+      {/* 🟡 EMPATE */}
+      <Pressable
+        disabled={loading}
+        onPress={() => finishMatch("draw")}
+        style={btnDraw}
+      >
+        <Text style={btnText}>🤝 Empate</Text>
+      </Pressable>
+
+      {/* 🎉 ANIMACIÓN */}
       {winner && (
         <View style={overlay}>
           <Animated.View
             style={[winnerCard, { transform: [{ scale: scaleAnim }] }]}
           >
             <Text style={winnerText}>
-              🏆 Ganó el {winner === 1 ? "Equipo A 🔵" : "Equipo B 🔴"}
+              {winner === "draw"
+                ? "🤝 ¡Empate!"
+                : `🏆 Ganó el ${winner === 1 ? "Equipo A 🔵" : "Equipo B 🔴"}`}
             </Text>
           </Animated.View>
         </View>
@@ -199,6 +202,8 @@ const title = {
   fontSize: 26,
   fontWeight: "bold" as const,
   marginBottom: 20,
+  textAlign: "center" as const,
+  letterSpacing: 1,
 } as const;
 
 const subtitle = {
@@ -207,7 +212,6 @@ const subtitle = {
   marginBottom: 10,
 } as const;
 
-/* EQUIPOS */
 const teamCard = {
   flex: 1,
   backgroundColor: "#111827",
@@ -245,7 +249,6 @@ const playerText = {
   color: "#fff",
 };
 
-/* BOTONES */
 const btnBlue = {
   backgroundColor: "#3b82f6",
   padding: 15,
@@ -262,12 +265,19 @@ const btnRed = {
   marginTop: 10,
 };
 
+const btnDraw = {
+  backgroundColor: "#f59e0b",
+  padding: 15,
+  borderRadius: 10,
+  alignItems: "center" as const,
+  marginTop: 10,
+};
+
 const btnText = {
   color: "#fff",
   fontWeight: "bold" as const,
 };
 
-/* ANIMACIÓN */
 const overlay = {
   position: "absolute" as const,
   top: 0,

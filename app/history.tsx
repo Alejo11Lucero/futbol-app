@@ -21,9 +21,7 @@ export default function History() {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: "#0f172a", padding: 16 }}>
-      <Text style={{ color: "#fff", fontSize: 24, marginBottom: 20 }}>
-        Historial
-      </Text>
+<Text style={title}>📖 Historial 📖</Text>
 
       {history.map((match, i) => (
         <View
@@ -49,3 +47,11 @@ export default function History() {
     </ScrollView>
   );
 }
+const title = {
+  color: "#fff",
+  fontSize: 26,
+  fontWeight: "bold" as const,
+  marginBottom: 20,
+  textAlign: "center" as const,
+  letterSpacing: 1,
+};

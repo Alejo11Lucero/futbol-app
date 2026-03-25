@@ -154,9 +154,7 @@ export default function CreateMatch() {
   return (
     <View style={{ flex: 1, backgroundColor: "#0f172a" }}>
       <ScrollView style={{ padding: 16 }}>
-        <Text style={{ color: "#fff", fontSize: 24, marginBottom: 20 }}>
-          Armar equipos
-        </Text>
+        <Text style={title}>🍞 Armar equipos 🧀</Text>
 
         {/* SELECTORES */}
         <View style={{ flexDirection: "row", gap: 10 }}>
@@ -257,6 +255,15 @@ export default function CreateMatch() {
     </View>
   );
 }
+
+const title = {
+  color: "#fff",
+  fontSize: 26,
+  fontWeight: "bold" as const,
+  marginBottom: 20,
+  textAlign: "center" as const,
+  letterSpacing: 1,
+};
 
 const btnBlue = {
   backgroundColor: "#3b82f6",

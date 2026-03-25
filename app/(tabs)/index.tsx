@@ -13,8 +13,8 @@ export default function Home() {
         backgroundColor: "#0f172a",
       }}
     >
-      <Text style={{ color: "#fff", fontSize: 28, marginBottom: 30 }}>
-        ⚽ Fulbo App
+      <Text style={title}>
+        ⚽ Fulbo App ⚽
       </Text>
 
       <Pressable onPress={() => router.push("/create-match")} style={btn}>
@@ -31,6 +31,15 @@ export default function Home() {
     </View>
   );
 }
+
+const title = {
+  color: "#fff",
+  fontSize: 26,
+  fontWeight: "bold" as const,
+  marginBottom: 20,
+  textAlign: "center" as const,
+  letterSpacing: 1,
+};
 
 const btn = {
   backgroundColor: "#22c55e",

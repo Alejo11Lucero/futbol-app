@@ -18,59 +18,55 @@ export default function RankingScreen() {
     if (data) setStandings(data);
   }
 
-  const top3 = standings.slice(0, 3);
+  const first = standings[0];
+  const second = standings[1];
+  const third = standings[2];
   const rest = standings.slice(3);
 
   return (
     <ScrollView style={container}>
-      <Text style={title}>🏆 Ranking</Text>
+      <Text style={title}>🏆 Ranking 🏆</Text>
 
-      {/* 🥇 PODIO */}
-      <View style={podiumContainer}>
-        {top3.map((player, index) => (
-          <View key={index} style={getPodiumStyle(index)}>
-            <Text style={podiumPosition}>{getMedal(index)}</Text>
-            <Text style={podiumName}>{player.players.name}</Text>
-            <Text style={podiumPoints}>{player.total_points} pts</Text>
+      {/* 🥇 PRIMER PUESTO */}
+      {first && (
+        <View style={firstContainer}>
+          <Text style={medal}>🥇</Text>
+          <Text style={firstName}>{first.players.name}</Text>
+          <Text style={firstPoints}>{first.total_points} pts</Text>
+        </View>
+      )}
+
+      {/* 🥈🥉 SEGUNDO Y TERCERO */}
+      <View style={secondThirdContainer}>
+        {second && (
+          <View style={secondCard}>
+            <Text style={medal}>🥈</Text>
+            <Text style={name}>{second.players.name}</Text>
+            <Text style={points}>{second.total_points} pts</Text>
           </View>
-        ))}
+        )}
+
+        {third && (
+          <View style={thirdCard}>
+            <Text style={medal}>🥉</Text>
+            <Text style={name}>{third.players.name}</Text>
+            <Text style={points}>{third.total_points} pts</Text>
+          </View>
+        )}
       </View>
 
-      {/* 📊 LISTA */}
-      <View style={{ marginTop: 20 }}>
+      {/* 📊 RESTO */}
+      <View style={{ marginTop: 30 }}>
         {rest.map((player, index) => (
           <View key={index} style={row}>
             <Text style={position}>{index + 4}</Text>
-
             <Text style={name}>{player.players.name}</Text>
-
             <Text style={points}>{player.total_points} pts</Text>
           </View>
         ))}
       </View>
     </ScrollView>
   );
-}
-
-/* 🧠 HELPERS */
-
-function getMedal(index: number) {
-  if (index === 0) return "🥇";
-  if (index === 1) return "🥈";
-  return "🥉";
-}
-
-function getPodiumStyle(index: number) {
-  const base = {
-    flex: 1,
-    alignItems: "center" as const,
-    padding: 15,
-    borderRadius: 12,
-  };
-
-  if (index === 0) return { ...base, backgroundColor: "#facc15" }; // oro
-  if (index === 1) return { ...base, backgroundColor: "#9ca3af" }; // plata
-  return { ...base, backgroundColor: "#b45309" }; // bronce
 }
 
 /* 🎨 ESTILOS */
@@ -85,49 +81,83 @@ const title = {
   color: "#fff",
   fontSize: 26,
   fontWeight: "bold" as const,
+  textAlign: "center" as const,
   marginBottom: 20,
 };
 
-const podiumContainer = {
-  flexDirection: "row" as const,
-  gap: 10,
+/* 🥇 */
+const firstContainer = {
+  alignItems: "center" as const,
+  backgroundColor: "#facc15",
+  padding: 20,
+  borderRadius: 16,
 };
 
-const podiumPosition = {
-  fontSize: 24,
-};
-
-const podiumName = {
+const firstName = {
   color: "#000",
+  fontSize: 18,
   fontWeight: "bold" as const,
   marginTop: 5,
 };
 
-const podiumPoints = {
+const firstPoints = {
   color: "#000",
   marginTop: 5,
 };
 
+/* 🥈🥉 */
+const secondThirdContainer = {
+  flexDirection: "row" as const,
+  justifyContent: "space-between" as const,
+  marginTop: 20,
+  gap: 10,
+};
+
+const secondCard = {
+  flex: 1,
+  backgroundColor: "#9ca3af",
+  padding: 15,
+  borderRadius: 12,
+  alignItems: "center" as const,
+};
+
+const thirdCard = {
+  flex: 1,
+  backgroundColor: "#b45309",
+  padding: 15,
+  borderRadius: 12,
+  alignItems: "center" as const,
+};
+
+const medal = {
+  fontSize: 24,
+};
+
+const name = {
+  color: "#fff",
+  marginTop: 5,
+  fontWeight: "bold" as const,
+  textAlign: "center" as const,
+};
+
+const points = {
+  color: "#22c55e",
+  fontWeight: "bold" as const,
+  marginTop: 5,
+};
+
+/* 📊 RESTO */
 const row = {
   flexDirection: "row" as const,
   alignItems: "center" as const,
   backgroundColor: "#1e293b",
-  padding: 12,
-  borderRadius: 10,
-  marginBottom: 8,
+  padding: 14,
+  borderRadius: 12,
+  marginBottom: 10,
 };
 
 const position = {
   color: "#94a3b8",
   width: 30,
-};
-
-const name = {
-  color: "#fff",
-  flex: 1,
-};
-
-const points = {
-  color: "#22c55e",
   fontWeight: "bold" as const,
 };
