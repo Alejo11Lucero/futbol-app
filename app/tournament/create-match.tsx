@@ -1,17 +1,13 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
-import {
-  Alert,
-  Animated,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
-import { supabase } from "../lib/supabase";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { Alert, Pressable, ScrollView, Text, View, Animated } from "react-native";
+import { supabase } from "../../lib/supabase";
 
-export default function CreateMatch() {
+export default function CreateTournamentMatchScreen() {
+  const { tournamentId } = useLocalSearchParams();
+  const router = useRouter();
+
   const [players, setPlayers] = useState<any[]>([]);
   const [matchId, setMatchId] = useState<string | null>(null);
 
@@ -22,51 +18,15 @@ export default function CreateMatch() {
   const [showB, setShowB] = useState(false);
 
   const [toast, setToast] = useState<string | null>(null);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-
-  const router = useRouter();
+  const fadeAnim = useState(new Animated.Value(0))[0];
 
   useEffect(() => {
-    fetchPlayers();
-    loadOrCreateMatch();
-  }, []);
-
-  async function fetchPlayers() {
-    const { data } = await supabase.from("players").select("*");
-    if (data) setPlayers(data);
-  }
-
-  async function loadOrCreateMatch() {
-    const saved = await AsyncStorage.getItem("activeMatch");
-
-    if (saved) {
-      setMatchId(saved);
-      return;
+    if (tournamentId) {
+      fetchPlayers();
+      loadOrCreateMatch();
     }
+  }, [tournamentId]);
 
-    const { data } = await supabase
-      .from("matches")
-      .insert([{ status: "pending" }])
-      .select();
-
-    const newMatchId = data?.[0]?.id;
-    setMatchId(newMatchId);
-
-    await AsyncStorage.setItem("activeMatch", newMatchId);
-
-    await supabase.from("teams_per_match").insert([
-      { match_id: newMatchId, team_number: 1 },
-      { match_id: newMatchId, team_number: 2 },
-    ]);
-  }
-
-  // 🔥 PLAYERS DISPONIBLES
-  const availablePlayers = players.filter(
-    (p) =>
-      !teamA.find((a) => a.id === p.id) && !teamB.find((b) => b.id === p.id),
-  );
-
-  // 🔥 TOAST
   function showToast(message: string) {
     setToast(message);
 
@@ -82,10 +42,63 @@ export default function CreateMatch() {
         duration: 150,
         useNativeDriver: true,
       }).start(() => setToast(null));
-    }, 650);
+    }, 500);
   }
 
-  // 🔥 AGREGAR JUGADOR
+  async function fetchPlayers() {
+    const { data, error } = await supabase
+      .from("players")
+      .select("id, display_name")
+      .eq("tournament_id", tournamentId);
+
+    if (error) {
+      console.log("Error cargando players:", error.message);
+      return;
+    }
+
+    setPlayers(data || []);
+  }
+
+  async function loadOrCreateMatch() {
+    const storageKey = `activeMatch_${tournamentId}`;
+    const saved = await AsyncStorage.getItem(storageKey);
+
+    if (saved) {
+      setMatchId(saved);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("matches")
+      .insert([
+        {
+          tournament_id: tournamentId,
+          status: "pending",
+        },
+      ])
+      .select()
+      .single();
+
+    if (error || !data) {
+      console.log("Error creando match:", error?.message);
+      return;
+    }
+
+    setMatchId(data.id);
+    await AsyncStorage.setItem(storageKey, data.id);
+
+    await supabase.from("teams_per_match").insert([
+      { match_id: data.id, team_number: 1 },
+      { match_id: data.id, team_number: 2 },
+    ]);
+  }
+
+  const availablePlayers = players.filter(
+    (p) =>
+      !teamA.find((a) => a.id === p.id) &&
+      !teamB.find((b) => b.id === p.id)
+  );
+
   async function addPlayer(player: any, teamNumber: number) {
     if (!matchId) return;
 
@@ -98,15 +111,20 @@ export default function CreateMatch() {
       return;
     }
 
-    const { data: teams } = await supabase
+    const { data: teams, error } = await supabase
       .from("teams_per_match")
       .select("*")
       .eq("match_id", matchId)
       .eq("team_number", teamNumber);
 
-    const teamId = teams?.[0]?.id;
+    if (error || !teams?.length) {
+      console.log("Error buscando equipo:", error?.message);
+      return;
+    }
 
-    await supabase.from("player_match").insert([
+    const teamId = teams[0].id;
+
+    const { error: insertError } = await supabase.from("player_match").insert([
       {
         player_id: player.id,
         match_id: matchId,
@@ -115,30 +133,40 @@ export default function CreateMatch() {
       },
     ]);
 
+    if (insertError) {
+      console.log("Error insertando player_match:", insertError.message);
+      return;
+    }
+
     if (teamNumber === 1) {
       setTeamA((prev) => [...prev, player]);
-      showToast(`➕ ${player.name} → Equipo A`);
+      showToast(`➕ ${player.display_name} → Equipo A`);
     } else {
       setTeamB((prev) => [...prev, player]);
-      showToast(`➕ ${player.name} → Equipo B`);
+      showToast(`➕ ${player.display_name} → Equipo B`);
     }
   }
 
-  // 🔥 ELIMINAR JUGADOR
   async function removePlayer(playerId: string) {
-    await supabase
+    if (!matchId) return;
+
+    const { error } = await supabase
       .from("player_match")
       .delete()
       .eq("player_id", playerId)
       .eq("match_id", matchId);
 
-    setTeamA(teamA.filter((p) => p.id !== playerId));
-    setTeamB(teamB.filter((p) => p.id !== playerId));
+    if (error) {
+      console.log("Error eliminando player:", error.message);
+      return;
+    }
+
+    setTeamA((prev) => prev.filter((p) => p.id !== playerId));
+    setTeamB((prev) => prev.filter((p) => p.id !== playerId));
 
     showToast("Jugador eliminado");
   }
 
-  // 🔥 CONFIRMAR
   function handleConfirm() {
     if (teamA.length === 0 || teamB.length === 0) {
       Alert.alert("Error", "Ambos equipos deben tener jugadores");
@@ -146,23 +174,21 @@ export default function CreateMatch() {
     }
 
     router.push({
-      pathname: "/result",
-      params: { matchId },
+      pathname: "/tournament/result",
+      params: { matchId, tournamentId },
     });
   }
 
   return (
     <View style={{ flex: 1, backgroundColor: "#0f172a" }}>
       <ScrollView style={{ padding: 16 }}>
-        <Text style={title}>🍞 Armar equipos 🧀</Text>
+        <Text style={{ color: "#fff", fontSize: 24, marginBottom: 20 }}>
+          Armar equipos
+        </Text>
 
-        {/* SELECTORES */}
         <View style={{ flexDirection: "row", gap: 10 }}>
-          {/* EQUIPO A */}
           <View style={{ flex: 1 }}>
-            <Text style={{ color: "#3b82f6", fontWeight: "bold" }}>
-              Equipo A
-            </Text>
+            <Text style={{ color: "#3b82f6", fontWeight: "bold" }}>Equipo A</Text>
 
             <Pressable onPress={() => setShowA(!showA)} style={btnBlue}>
               <Text style={{ color: "#fff" }}>Agregar</Text>
@@ -171,16 +197,13 @@ export default function CreateMatch() {
             {showA &&
               availablePlayers.map((p) => (
                 <Pressable key={p.id} onPress={() => addPlayer(p, 1)}>
-                  <Text style={dropdownItem}>{p.name}</Text>
+                  <Text style={dropdownItem}>{p.display_name}</Text>
                 </Pressable>
               ))}
           </View>
 
-          {/* EQUIPO B */}
           <View style={{ flex: 1 }}>
-            <Text style={{ color: "#ef4444", fontWeight: "bold" }}>
-              Equipo B
-            </Text>
+            <Text style={{ color: "#ef4444", fontWeight: "bold" }}>Equipo B</Text>
 
             <Pressable onPress={() => setShowB(!showB)} style={btnRed}>
               <Text style={{ color: "#fff" }}>Agregar</Text>
@@ -189,22 +212,19 @@ export default function CreateMatch() {
             {showB &&
               availablePlayers.map((p) => (
                 <Pressable key={p.id} onPress={() => addPlayer(p, 2)}>
-                  <Text style={dropdownItem}>{p.name}</Text>
+                  <Text style={dropdownItem}>{p.display_name}</Text>
                 </Pressable>
               ))}
           </View>
         </View>
 
-        {/* LISTAS */}
         <View style={{ flexDirection: "row", gap: 10, marginTop: 30 }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: "#3b82f6", fontWeight: "bold" }}>
-              Equipo A
-            </Text>
+            <Text style={{ color: "#3b82f6", fontWeight: "bold" }}>Equipo A</Text>
 
             {teamA.map((p) => (
               <View key={p.id} style={playerRow}>
-                <Text style={{ color: "#fff" }}>{p.name}</Text>
+                <Text style={{ color: "#fff" }}>{p.display_name}</Text>
                 <Pressable onPress={() => removePlayer(p.id)}>
                   <Text style={{ color: "#ef4444" }}>❌</Text>
                 </Pressable>
@@ -213,13 +233,11 @@ export default function CreateMatch() {
           </View>
 
           <View style={{ flex: 1 }}>
-            <Text style={{ color: "#ef4444", fontWeight: "bold" }}>
-              Equipo B
-            </Text>
+            <Text style={{ color: "#ef4444", fontWeight: "bold" }}>Equipo B</Text>
 
             {teamB.map((p) => (
               <View key={p.id} style={playerRow}>
-                <Text style={{ color: "#fff" }}>{p.name}</Text>
+                <Text style={{ color: "#fff" }}>{p.display_name}</Text>
                 <Pressable onPress={() => removePlayer(p.id)}>
                   <Text style={{ color: "#ef4444" }}>❌</Text>
                 </Pressable>
@@ -235,7 +253,6 @@ export default function CreateMatch() {
         </Pressable>
       </ScrollView>
 
-      {/* 🔥 TOAST */}
       {toast && (
         <Animated.View
           style={{
@@ -249,21 +266,14 @@ export default function CreateMatch() {
             opacity: fadeAnim,
           }}
         >
-          <Text style={{ color: "#000", fontWeight: "bold" }}>{toast}</Text>
+          <Text style={{ color: "#000", fontWeight: "bold" }}>
+            {toast}
+          </Text>
         </Animated.View>
       )}
     </View>
   );
 }
-
-const title = {
-  color: "#fff",
-  fontSize: 26,
-  fontWeight: "bold" as const,
-  marginBottom: 20,
-  textAlign: "center" as const,
-  letterSpacing: 1,
-};
 
 const btnBlue = {
   backgroundColor: "#3b82f6",

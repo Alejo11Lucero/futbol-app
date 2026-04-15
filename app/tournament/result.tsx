@@ -2,10 +2,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Pressable, Text, View } from "react-native";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../../lib/supabase";
 
-export default function ResultScreen() {
-  const { matchId } = useLocalSearchParams();
+export default function TournamentResultScreen() {
+  const { matchId, tournamentId } = useLocalSearchParams();
   const router = useRouter();
 
   const [teamA, setTeamA] = useState<any[]>([]);
@@ -18,7 +18,11 @@ export default function ResultScreen() {
   const fetchTeams = useCallback(async () => {
     const { data } = await supabase
       .from("player_match")
-      .select(`player_id, players(name), team_id`)
+      .select(`
+        player_id,
+        players(display_name),
+        team_id
+      `)
       .eq("match_id", matchId);
 
     const { data: teams } = await supabase
@@ -39,7 +43,6 @@ export default function ResultScreen() {
     fetchTeams();
   }, [fetchTeams]);
 
-  // 🏆 FINALIZAR PARTIDO (GANADOR O EMPATE)
   async function finishMatch(result: number | "draw") {
     if (loading) return;
 
@@ -51,7 +54,10 @@ export default function ResultScreen() {
       .select("id, player_id, team_id")
       .eq("match_id", matchId);
 
-    if (!data) return;
+    if (!data) {
+      setLoading(false);
+      return;
+    }
 
     for (const item of data) {
       let points = 0;
@@ -91,7 +97,6 @@ export default function ResultScreen() {
       })
       .eq("id", matchId);
 
-    // 🎉 ANIMACIÓN
     Animated.spring(scaleAnim, {
       toValue: 1,
       speed: 20,
@@ -99,14 +104,13 @@ export default function ResultScreen() {
       useNativeDriver: true,
     }).start();
 
-    // ⏱ desaparecer rápido + volver
     setTimeout(() => {
       Animated.timing(scaleAnim, {
         toValue: 0.5,
         duration: 120,
         useNativeDriver: true,
       }).start(async () => {
-        await AsyncStorage.removeItem("activeMatch");
+        await AsyncStorage.removeItem(`activeMatch_${tournamentId}`);
         router.replace("/");
       });
     }, 400);
@@ -114,9 +118,8 @@ export default function ResultScreen() {
 
   return (
     <View style={container}>
-      <Text style={title}>🎖️ Resultado del Partido 🎖️</Text>
+      <Text style={title}>Resultado del Partido</Text>
 
-      {/* EQUIPOS */}
       <View style={{ flexDirection: "row", gap: 12 }}>
         <View style={teamCard}>
           <Text style={teamTitleBlue}>🔵 Equipo A ({teamA.length})</Text>
@@ -125,7 +128,7 @@ export default function ResultScreen() {
 
           {teamA.map((p, i) => (
             <View key={i} style={playerCard}>
-              <Text style={playerText}>{p.players.name}</Text>
+              <Text style={playerText}>{p.players.display_name}</Text>
             </View>
           ))}
         </View>
@@ -137,13 +140,12 @@ export default function ResultScreen() {
 
           {teamB.map((p, i) => (
             <View key={i} style={playerCard}>
-              <Text style={playerText}>{p.players.name}</Text>
+              <Text style={playerText}>{p.players.display_name}</Text>
             </View>
           ))}
         </View>
       </View>
 
-      {/* RESULTADO */}
       <Text style={subtitle}>¿Cómo terminó?</Text>
 
       <Pressable
@@ -162,7 +164,6 @@ export default function ResultScreen() {
         <Text style={btnText}>🏆 Ganó Equipo B</Text>
       </Pressable>
 
-      {/* 🟡 EMPATE */}
       <Pressable
         disabled={loading}
         onPress={() => finishMatch("draw")}
@@ -171,7 +172,6 @@ export default function ResultScreen() {
         <Text style={btnText}>🤝 Empate</Text>
       </Pressable>
 
-      {/* 🎉 ANIMACIÓN */}
       {winner && (
         <View style={overlay}>
           <Animated.View
@@ -189,8 +189,6 @@ export default function ResultScreen() {
   );
 }
 
-/* 🎨 ESTILOS */
-
 const container = {
   flex: 1,
   backgroundColor: "#0f172a",
@@ -202,8 +200,6 @@ const title = {
   fontSize: 26,
   fontWeight: "bold" as const,
   marginBottom: 20,
-  textAlign: "center" as const,
-  letterSpacing: 1,
 } as const;
 
 const subtitle = {
@@ -219,35 +215,35 @@ const teamCard = {
   borderRadius: 12,
   borderWidth: 1,
   borderColor: "#1f2937",
-};
+} as const;
 
 const teamTitleBlue = {
   color: "#3b82f6",
   fontWeight: "bold" as const,
   marginBottom: 10,
-};
+} as const;
 
 const teamTitleRed = {
   color: "#ef4444",
   fontWeight: "bold" as const,
   marginBottom: 10,
-};
+} as const;
 
 const emptyText = {
   color: "#6b7280",
   fontStyle: "italic" as const,
-};
+} as const;
 
 const playerCard = {
   backgroundColor: "#1e293b",
   padding: 10,
   borderRadius: 8,
   marginBottom: 6,
-};
+} as const;
 
 const playerText = {
   color: "#fff",
-};
+} as const;
 
 const btnBlue = {
   backgroundColor: "#3b82f6",
@@ -255,7 +251,7 @@ const btnBlue = {
   borderRadius: 10,
   alignItems: "center" as const,
   marginTop: 10,
-};
+} as const;
 
 const btnRed = {
   backgroundColor: "#ef4444",
@@ -263,7 +259,7 @@ const btnRed = {
   borderRadius: 10,
   alignItems: "center" as const,
   marginTop: 10,
-};
+} as const;
 
 const btnDraw = {
   backgroundColor: "#f59e0b",
@@ -271,12 +267,12 @@ const btnDraw = {
   borderRadius: 10,
   alignItems: "center" as const,
   marginTop: 10,
-};
+} as const;
 
 const btnText = {
   color: "#fff",
   fontWeight: "bold" as const,
-};
+} as const;
 
 const overlay = {
   position: "absolute" as const,
@@ -287,16 +283,16 @@ const overlay = {
   backgroundColor: "rgba(0,0,0,0.8)",
   justifyContent: "center" as const,
   alignItems: "center" as const,
-};
+} as const;
 
 const winnerCard = {
   backgroundColor: "#22c55e",
   padding: 30,
   borderRadius: 20,
-};
+} as const;
 
 const winnerText = {
   color: "#000",
   fontSize: 22,
   fontWeight: "bold" as const,
-};
+} as const;
