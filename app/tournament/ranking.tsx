@@ -1,6 +1,7 @@
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
+import BackButton from "../../components/BackButton";
 import { supabase } from "../../lib/supabase";
 
 export default function TournamentRankingScreen() {
@@ -19,12 +20,14 @@ export default function TournamentRankingScreen() {
 
     const { data, error } = await supabase
       .from("standings")
-      .select(`
+      .select(
+        `
         total_points,
         players (
           display_name
         )
-      `)
+      `,
+      )
       .eq("tournament_id", tournamentId)
       .order("total_points", { ascending: false });
 
@@ -44,60 +47,59 @@ export default function TournamentRankingScreen() {
   const rest = standings.slice(3);
 
   return (
-    <ScrollView style={container}>
-      <Text style={title}>🏆 Ranking del torneo 🏆</Text>
+    <View style={{ flex: 1, backgroundColor: "#0f172a" }}>
+      <BackButton />
 
-      {loading ? (
-        <Text style={emptyText}>Cargando ranking...</Text>
-      ) : standings.length === 0 ? (
-        <Text style={emptyText}>Todavía no hay puntos en este torneo</Text>
-      ) : (
-        <>
-          {/* 🥇 PRIMER PUESTO */}
-          {first && (
-            <View style={firstContainer}>
-              <Text style={medal}>🥇</Text>
-              <Text style={firstName}>{first.players.display_name}</Text>
-              <Text style={firstPoints}>{first.total_points} pts</Text>
+      <ScrollView style={container}>
+        <Text style={[title, { marginTop: 70 }]}>🏆 Ranking del torneo 🏆</Text>
+
+        {loading ? (
+          <Text style={emptyText}>Cargando ranking...</Text>
+        ) : standings.length === 0 ? (
+          <Text style={emptyText}>Todavía no hay puntos en este torneo</Text>
+        ) : (
+          <>
+            {first && (
+              <View style={firstContainer}>
+                <Text style={medal}>🥇</Text>
+                <Text style={firstName}>{first.players.display_name}</Text>
+                <Text style={firstPoints}>{first.total_points} pts</Text>
+              </View>
+            )}
+
+            <View style={secondThirdContainer}>
+              {second && (
+                <View style={secondCard}>
+                  <Text style={medal}>🥈</Text>
+                  <Text style={name}>{second.players.display_name}</Text>
+                  <Text style={points}>{second.total_points} pts</Text>
+                </View>
+              )}
+
+              {third && (
+                <View style={thirdCard}>
+                  <Text style={medal}>🥉</Text>
+                  <Text style={name}>{third.players.display_name}</Text>
+                  <Text style={points}>{third.total_points} pts</Text>
+                </View>
+              )}
             </View>
-          )}
 
-          {/* 🥈🥉 SEGUNDO Y TERCERO */}
-          <View style={secondThirdContainer}>
-            {second && (
-              <View style={secondCard}>
-                <Text style={medal}>🥈</Text>
-                <Text style={name}>{second.players.display_name}</Text>
-                <Text style={points}>{second.total_points} pts</Text>
-              </View>
-            )}
-
-            {third && (
-              <View style={thirdCard}>
-                <Text style={medal}>🥉</Text>
-                <Text style={name}>{third.players.display_name}</Text>
-                <Text style={points}>{third.total_points} pts</Text>
-              </View>
-            )}
-          </View>
-
-          {/* 📊 RESTO */}
-          <View style={{ marginTop: 30 }}>
-            {rest.map((player, index) => (
-              <View key={index} style={row}>
-                <Text style={position}>{index + 4}</Text>
-                <Text style={name}>{player.players.display_name}</Text>
-                <Text style={points}>{player.total_points} pts</Text>
-              </View>
-            ))}
-          </View>
-        </>
-      )}
-    </ScrollView>
+            <View style={{ marginTop: 30 }}>
+              {rest.map((player, index) => (
+                <View key={index} style={row}>
+                  <Text style={position}>{index + 4}</Text>
+                  <Text style={name}>{player.players.display_name}</Text>
+                  <Text style={points}>{player.total_points} pts</Text>
+                </View>
+              ))}
+            </View>
+          </>
+        )}
+      </ScrollView>
+    </View>
   );
 }
-
-/* 🎨 ESTILOS */
 
 const container = {
   flex: 1,
@@ -119,7 +121,6 @@ const emptyText = {
   marginTop: 30,
 } as const;
 
-/* 🥇 */
 const firstContainer = {
   alignItems: "center" as const,
   backgroundColor: "#facc15",
@@ -139,7 +140,6 @@ const firstPoints = {
   marginTop: 5,
 } as const;
 
-/* 🥈🥉 */
 const secondThirdContainer = {
   flexDirection: "row" as const,
   justifyContent: "space-between" as const,
@@ -180,7 +180,6 @@ const points = {
   marginTop: 5,
 } as const;
 
-/* 📊 RESTO */
 const row = {
   flexDirection: "row" as const,
   alignItems: "center" as const,

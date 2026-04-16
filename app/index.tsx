@@ -1,8 +1,8 @@
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
-import { useRouter } from "expo-router";
-import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
+import { supabase } from "../lib/supabase";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -44,15 +44,16 @@ export default function HomeScreen() {
     <View style={container}>
       <Text style={title}>⚽ Fulbo App ⚽</Text>
 
-      <Text style={welcome}>
-        Bienvenido{username ? `, ${username}` : ""}
-      </Text>
+      <Text style={welcome}>Bienvenido{username ? `, ${username}` : ""}</Text>
 
       <Pressable onPress={() => router.push("/join-tournament")} style={button}>
         <Text style={buttonText}>Buscar torneo</Text>
       </Pressable>
 
-      <Pressable onPress={() => router.push("/create-tournament")} style={button}>
+      <Pressable
+        onPress={() => router.push("/create-tournament")}
+        style={button}
+      >
         <Text style={buttonText}>Crear torneo</Text>
       </Pressable>
 

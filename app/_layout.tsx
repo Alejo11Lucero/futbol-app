@@ -1,6 +1,6 @@
 import { Redirect, Slot, usePathname } from "expo-router";
-import { AuthProvider, useAuth } from "../contexts/AuthContext";
 import { Text, View } from "react-native";
+import { AuthProvider, useAuth } from "../contexts/AuthContext";
 
 function RootNavigator() {
   const { user, loading } = useAuth();
@@ -23,12 +23,12 @@ function RootNavigator() {
 
   const isAuthRoute = pathname === "/login" || pathname === "/register";
 
-  // 🔒 Si NO hay usuario y NO está en login/register → mandar a login
+  // Si NO hay usuario y quiere entrar a una ruta privada → login
   if (!user && !isAuthRoute) {
     return <Redirect href="/login" />;
   }
 
-  // 🔓 Si HAY usuario y está en login/register → mandar al home
+  // Si HAY usuario y está en login/register → home
   if (user && isAuthRoute) {
     return <Redirect href="/" />;
   }

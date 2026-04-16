@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Pressable, Text, View } from "react-native";
 import { supabase } from "../../lib/supabase";
+import BackButton from "../../components/BackButton";
 
 export default function TournamentResultScreen() {
   const { matchId, tournamentId } = useLocalSearchParams();
@@ -118,7 +119,9 @@ export default function TournamentResultScreen() {
 
   return (
     <View style={container}>
-      <Text style={title}>Resultado del Partido</Text>
+      <BackButton />
+
+      <Text style={[title, { marginTop: 70 }]}>Resultado del Partido</Text>
 
       <View style={{ flexDirection: "row", gap: 12 }}>
         <View style={teamCard}>
@@ -180,7 +183,9 @@ export default function TournamentResultScreen() {
             <Text style={winnerText}>
               {winner === "draw"
                 ? "🤝 ¡Empate!"
-                : `🏆 Ganó el ${winner === 1 ? "Equipo A 🔵" : "Equipo B 🔴"}`}
+                : `🏆 Ganó el ${
+                    winner === 1 ? "Equipo A 🔵" : "Equipo B 🔴"
+                  }`}
             </Text>
           </Animated.View>
         </View>

@@ -1,8 +1,9 @@
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
-import { supabase } from "../../lib/supabase";
+import BackButton from "../../components/BackButton";
 import { useAuth } from "../../contexts/AuthContext";
+import { supabase } from "../../lib/supabase";
 
 export default function ParticipantsScreen() {
   const { tournamentId } = useLocalSearchParams();
@@ -40,11 +41,13 @@ export default function ParticipantsScreen() {
 
     const { data, error } = await supabase
       .from("tournament_members")
-      .select(`
+      .select(
+        `
         id,
         role,
         user_id
-      `)
+      `,
+      )
       .eq("tournament_id", tournamentId);
 
     if (error) {
@@ -110,35 +113,39 @@ export default function ParticipantsScreen() {
   }
 
   return (
-    <ScrollView style={container}>
-      <Text style={title}>Participantes</Text>
+    <View style={{ flex: 1, backgroundColor: "#0f172a" }}>
+      <BackButton />
 
-      {loading ? (
-        <Text style={emptyText}>Cargando participantes...</Text>
-      ) : participants.length === 0 ? (
-        <Text style={emptyText}>No hay participantes</Text>
-      ) : (
-        participants.map((item) => (
-          <View key={item.id} style={card}>
-            <View>
-              <Text style={username}>{item.username}</Text>
-              <Text style={role}>Rol: {item.role}</Text>
+      <ScrollView style={container}>
+        <Text style={title}>Participantes</Text>
+
+        {loading ? (
+          <Text style={emptyText}>Cargando participantes...</Text>
+        ) : participants.length === 0 ? (
+          <Text style={emptyText}>No hay participantes</Text>
+        ) : (
+          participants.map((item) => (
+            <View key={item.id} style={card}>
+              <View>
+                <Text style={username}>{item.username}</Text>
+                <Text style={role}>Rol: {item.role}</Text>
+              </View>
+
+              {myRole === "owner" &&
+                item.role === "player" &&
+                item.user_id !== user?.id && (
+                  <Pressable
+                    onPress={() => makeAdmin(item.id, item.role)}
+                    style={adminButton}
+                  >
+                    <Text style={adminButtonText}>Hacer admin</Text>
+                  </Pressable>
+                )}
             </View>
-
-            {myRole === "owner" &&
-              item.role === "player" &&
-              item.user_id !== user?.id && (
-                <Pressable
-                  onPress={() => makeAdmin(item.id, item.role)}
-                  style={adminButton}
-                >
-                  <Text style={adminButtonText}>Hacer admin</Text>
-                </Pressable>
-              )}
-          </View>
-        ))
-      )}
-    </ScrollView>
+          ))
+        )}
+      </ScrollView>
+    </View>
   );
 }
 

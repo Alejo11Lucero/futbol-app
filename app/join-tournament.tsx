@@ -1,8 +1,9 @@
+import { router } from "expo-router";
 import { useState } from "react";
 import { Animated, Pressable, Text, TextInput, View } from "react-native";
-import { supabase } from "../lib/supabase";
+import BackButton from "../components/BackButton";
 import { useAuth } from "../contexts/AuthContext";
-import { router } from "expo-router";
+import { supabase } from "../lib/supabase";
 
 export default function JoinTournamentScreen() {
   const { user } = useAuth();
@@ -43,7 +44,6 @@ export default function JoinTournamentScreen() {
 
     setLoading(true);
 
-    // 1. Buscar torneo por código
     const { data: tournament, error } = await supabase
       .from("tournaments")
       .select("id, name")
@@ -56,7 +56,6 @@ export default function JoinTournamentScreen() {
       return;
     }
 
-    // 2. Traer username del perfil
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("username")
@@ -69,7 +68,6 @@ export default function JoinTournamentScreen() {
       return;
     }
 
-    // 3. Insertar membresía
     const { error: joinError } = await supabase
       .from("tournament_members")
       .insert([
@@ -86,16 +84,13 @@ export default function JoinTournamentScreen() {
       return;
     }
 
-    // 4. Crear player del torneo
-    const { error: playerError } = await supabase
-      .from("players")
-      .insert([
-        {
-          user_id: user.id,
-          tournament_id: tournament.id,
-          display_name: profile.username,
-        },
-      ]);
+    const { error: playerError } = await supabase.from("players").insert([
+      {
+        user_id: user.id,
+        tournament_id: tournament.id,
+        display_name: profile.username,
+      },
+    ]);
 
     setLoading(false);
 
@@ -113,6 +108,8 @@ export default function JoinTournamentScreen() {
 
   return (
     <View style={container}>
+      <BackButton />
+
       <Text style={title}>Unirse a torneo</Text>
 
       <TextInput
@@ -125,9 +122,7 @@ export default function JoinTournamentScreen() {
       />
 
       <Pressable onPress={handleJoin} style={button} disabled={loading}>
-        <Text style={buttonText}>
-          {loading ? "Uniéndose..." : "Unirse"}
-        </Text>
+        <Text style={buttonText}>{loading ? "Uniéndose..." : "Unirse"}</Text>
       </Pressable>
 
       {message && (

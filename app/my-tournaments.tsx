@@ -1,8 +1,9 @@
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
-import { useRouter } from "expo-router";
-import { supabase } from "../lib/supabase";
+import BackButton from "../components/BackButton";
 import { useAuth } from "../contexts/AuthContext";
+import { supabase } from "../lib/supabase";
 
 export default function MyTournamentsScreen() {
   const { user } = useAuth();
@@ -23,7 +24,8 @@ export default function MyTournamentsScreen() {
 
     const { data, error } = await supabase
       .from("tournament_members")
-      .select(`
+      .select(
+        `
         role,
         tournaments (
           id,
@@ -31,7 +33,8 @@ export default function MyTournamentsScreen() {
           invite_code,
           created_at
         )
-      `)
+      `,
+      )
       .eq("user_id", user.id);
 
     setLoading(false);
@@ -45,42 +48,46 @@ export default function MyTournamentsScreen() {
   }
 
   return (
-    <ScrollView style={container}>
-      <Text style={title}>Mis torneos</Text>
+    <View style={{ flex: 1, backgroundColor: "#0f172a" }}>
+      <BackButton />
 
-      {loading ? (
-        <Text style={emptyText}>Cargando torneos...</Text>
-      ) : tournaments.length === 0 ? (
-        <Text style={emptyText}>Todavía no participás en ningún torneo</Text>
-      ) : (
-        tournaments.map((item, index) => {
-          const tournament = item.tournaments;
+      <ScrollView style={container}>
+        <Text style={title}>Mis torneos</Text>
 
-          if (!tournament) return null;
+        {loading ? (
+          <Text style={emptyText}>Cargando torneos...</Text>
+        ) : tournaments.length === 0 ? (
+          <Text style={emptyText}>Todavía no participás en ningún torneo</Text>
+        ) : (
+          tournaments.map((item, index) => {
+            const tournament = item.tournaments;
 
-          return (
-            <Pressable
-              key={index}
-              onPress={() =>
-                router.push({
-                  pathname: "/tournament/[id]",
-                  params: { id: tournament.id },
-                })
-              }
-              style={card}
-            >
-              <Text style={cardTitle}>{tournament.name}</Text>
+            if (!tournament) return null;
 
-              <Text style={cardSubtitle}>
-                Código: {tournament.invite_code}
-              </Text>
+            return (
+              <Pressable
+                key={index}
+                onPress={() =>
+                  router.push({
+                    pathname: "/tournament/[id]",
+                    params: { id: tournament.id },
+                  })
+                }
+                style={card}
+              >
+                <Text style={cardTitle}>{tournament.name}</Text>
 
-              <Text style={cardSubtitle}>Rol: {item.role}</Text>
-            </Pressable>
-          );
-        })
-      )}
-    </ScrollView>
+                <Text style={cardSubtitle}>
+                  Código: {tournament.invite_code}
+                </Text>
+
+                <Text style={cardSubtitle}>Rol: {item.role}</Text>
+              </Pressable>
+            );
+          })
+        )}
+      </ScrollView>
+    </View>
   );
 }
 

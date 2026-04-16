@@ -1,6 +1,7 @@
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
+import BackButton from "../../components/BackButton";
 import { supabase } from "../../lib/supabase";
 
 export default function TournamentHistoryScreen() {
@@ -41,40 +42,42 @@ export default function TournamentHistoryScreen() {
   }
 
   return (
-    <ScrollView style={container}>
-      <Text style={title}>📜 Historial del torneo</Text>
+    <View style={{ flex: 1, backgroundColor: "#0f172a" }}>
+      <BackButton />
 
-      {loading ? (
-        <Text style={emptyText}>Cargando historial...</Text>
-      ) : matches.length === 0 ? (
-        <Text style={emptyText}>Todavía no hay partidos jugados</Text>
-      ) : (
-        matches.map((match, index) => (
-          <View key={match.id} style={card}>
-            <Text style={matchTitle}>Partido #{matches.length - index}</Text>
+      <ScrollView style={container}>
+        <Text style={[title, { marginTop: 70 }]}>📜 Historial del torneo</Text>
 
-            <Text style={matchDate}>
-              {new Date(match.created_at).toLocaleDateString("es-AR", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-              })}{" "}
-              ·{" "}
-              {new Date(match.created_at).toLocaleTimeString("es-AR", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </Text>
+        {loading ? (
+          <Text style={emptyText}>Cargando historial...</Text>
+        ) : matches.length === 0 ? (
+          <Text style={emptyText}>Todavía no hay partidos jugados</Text>
+        ) : (
+          matches.map((match, index) => (
+            <View key={match.id} style={card}>
+              <Text style={matchTitle}>Partido #{matches.length - index}</Text>
 
-            <Text style={resultText}>{getResultText(match.winner_team)}</Text>
-          </View>
-        ))
-      )}
-    </ScrollView>
+              <Text style={matchDate}>
+                {new Date(match.created_at).toLocaleDateString("es-AR", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                })}{" "}
+                ·{" "}
+                {new Date(match.created_at).toLocaleTimeString("es-AR", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </Text>
+
+              <Text style={resultText}>{getResultText(match.winner_team)}</Text>
+            </View>
+          ))
+        )}
+      </ScrollView>
+    </View>
   );
 }
-
-/* 🎨 ESTILOS */
 
 const container = {
   flex: 1,

@@ -1,7 +1,14 @@
 import { Link, router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Animated, Pressable, Text, TextInput, View } from "react-native";
+import {
+  Animated,
+  Pressable,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { supabase } from "../lib/supabase";
+import BackButton from "../components/BackButton";
 
 export default function RegisterScreen() {
   const [username, setUsername] = useState("");
@@ -55,7 +62,6 @@ export default function RegisterScreen() {
 
     setLoading(true);
 
-    // 1. Crear cuenta en auth.users
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
@@ -75,7 +81,6 @@ export default function RegisterScreen() {
       return;
     }
 
-    // 2. Crear perfil público
     const { error: profileError } = await supabase.from("profiles").insert([
       {
         id: userId,
@@ -99,6 +104,8 @@ export default function RegisterScreen() {
 
   return (
     <View style={container}>
+      <BackButton />
+
       <Text style={title}>Crear cuenta</Text>
 
       <TextInput

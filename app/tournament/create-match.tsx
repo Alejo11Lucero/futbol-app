@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, Pressable, ScrollView, Text, View, Animated } from "react-native";
 import { supabase } from "../../lib/supabase";
+import BackButton from "../../components/BackButton";
 
 export default function CreateTournamentMatchScreen() {
   const { tournamentId } = useLocalSearchParams();
@@ -181,7 +182,9 @@ export default function CreateTournamentMatchScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#0f172a" }}>
-      <ScrollView style={{ padding: 16 }}>
+      <BackButton />
+
+      <ScrollView style={{ padding: 16, paddingTop: 90 }}>
         <Text style={{ color: "#fff", fontSize: 24, marginBottom: 20 }}>
           Armar equipos
         </Text>

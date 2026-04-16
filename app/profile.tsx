@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Animated, Pressable, Text, TextInput, View } from "react-native";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
+import BackButton from "../components/BackButton";
 
 export default function ProfileScreen() {
   const { user } = useAuth();
@@ -83,7 +84,6 @@ export default function ProfileScreen() {
 
     setLoading(true);
 
-    // 1. actualizar profiles
     const { error: profileError } = await supabase
       .from("profiles")
       .update({ username: username.trim() })
@@ -95,7 +95,6 @@ export default function ProfileScreen() {
       return;
     }
 
-    // 2. actualizar display_name en todos los players del usuario
     const { error: playersError } = await supabase
       .from("players")
       .update({ display_name: username.trim() })
@@ -115,6 +114,8 @@ export default function ProfileScreen() {
 
   return (
     <View style={container}>
+      <BackButton />
+
       <Text style={title}>Mi perfil</Text>
 
       <Text style={label}>Email</Text>

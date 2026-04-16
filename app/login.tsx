@@ -2,6 +2,7 @@ import { Link } from "expo-router";
 import { useEffect, useState } from "react";
 import { Animated, Pressable, Text, TextInput, View } from "react-native";
 import { supabase } from "../lib/supabase";
+import BackButton from "../components/BackButton";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -57,6 +58,8 @@ export default function LoginScreen() {
 
   return (
     <View style={container}>
+      <BackButton />
+
       <Text style={title}>Iniciar sesión</Text>
 
       <TextInput

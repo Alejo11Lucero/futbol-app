@@ -3,6 +3,7 @@ import { Animated, Pressable, Text, TextInput, View } from "react-native";
 import { router } from "expo-router";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
+import BackButton from "../components/BackButton";
 
 export default function CreateTournamentScreen() {
   const { user } = useAuth();
@@ -48,7 +49,6 @@ export default function CreateTournamentScreen() {
 
     const inviteCode = generateInviteCode();
 
-    // 1. Traer username del usuario actual
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("username")
@@ -61,7 +61,6 @@ export default function CreateTournamentScreen() {
       return;
     }
 
-    // 2. Crear torneo
     const { data: tournamentData, error: tournamentError } = await supabase
       .from("tournaments")
       .insert([
@@ -80,7 +79,6 @@ export default function CreateTournamentScreen() {
       return;
     }
 
-    // 3. Insertar creador como miembro
     const { error: memberError } = await supabase
       .from("tournament_members")
       .insert([
@@ -97,7 +95,6 @@ export default function CreateTournamentScreen() {
       return;
     }
 
-    // 4. Crear player dentro del torneo
     const { error: playerError } = await supabase
       .from("players")
       .insert([
@@ -124,6 +121,8 @@ export default function CreateTournamentScreen() {
 
   return (
     <View style={container}>
+      <BackButton />
+
       <Text style={title}>Crear torneo</Text>
 
       <TextInput

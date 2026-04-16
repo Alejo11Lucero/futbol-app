@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
+import BackButton from "../../components/BackButton";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
 
@@ -59,6 +60,7 @@ export default function TournamentDetailScreen() {
   if (loading) {
     return (
       <View style={container}>
+        <BackButton />
         <Text style={loadingText}>Cargando torneo...</Text>
       </View>
     );
@@ -67,6 +69,7 @@ export default function TournamentDetailScreen() {
   if (!tournament) {
     return (
       <View style={container}>
+        <BackButton />
         <Text style={loadingText}>No se pudo cargar el torneo</Text>
       </View>
     );
@@ -74,6 +77,8 @@ export default function TournamentDetailScreen() {
 
   return (
     <View style={container}>
+      <BackButton />
+
       <Text style={title}>{tournament.name}</Text>
 
       <Text style={subtitle}>Código: {tournament.invite_code}</Text>
